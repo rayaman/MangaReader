@@ -1,0 +1,60 @@
+local multi,thread = require("multi"):init()
+local GLOBAL,THREAD = require("multi.integration.loveManager"):init()
+local func = THREAD:newFunction(function(path)
+	require("love.image")
+	return love.image.newImageData(path)
+end)
+local load = THREAD:newFunction(function(path)
+	require("love.image")
+	require("love.filesystem")
+	local http = require("socket.http")
+	local request = require("luajit-request")
+	function download(path)
+		if path:find("https") then
+			return request.send(path).body
+		elseif path:find("http") then
+			return http.request(path)
+		end
+	end
+	return love.image.newImageData(love.filesystem.newFileData((download(path)),"temp"..path:sub(-4,-1)))
+end)
+local cache = {}
+function gui:SetImage(i,inthread)
+	if not i then return end
+	if type(i) == "userdata" and i:type() == "Image" then
+		self.Image=i
+		self.ImageHeigth=self.Image:getHeight()
+		self.ImageWidth=self.Image:getWidth()
+		self.Quad=love.graphics.newQuad(0,0,self.width,self.height,self.ImageWidth,self.ImageHeigth)
+	elseif type(i)=="string" then
+		if cache[i] then
+			self:SetImage(cache[i])
+		else
+			if i:match([[https?://]]) then
+				load(i).connect(function(img)
+					self.Image = love.graphics.newImage(img)
+					cache[i]=self.Image
+					self.ImageHeigth=self.Image:getHeight()
+					self.ImageWidth=self.Image:getWidth()
+					self.Quad=love.graphics.newQuad(0,0,self.width,self.height,self.ImageWidth,self.ImageHeigth)
+				end)
+			else
+				if inthread or self.threadable then
+					func(i).connect(function(img)
+						self.Image = love.graphics.newImage(img)
+						cache[i]=self.Image
+						self.ImageHeigth=self.Image:getHeight()
+						self.ImageWidth=self.Image:getWidth()
+						self.Quad=love.graphics.newQuad(0,0,self.width,self.height,self.ImageWidth,self.ImageHeigth)
+					end)
+				else
+					self.Image = love.graphics.newImage(i)
+					cache[i]=self.Image
+					self.ImageHeigth=self.Image:getHeight()
+					self.ImageWidth=self.Image:getWidth()
+					self.Quad=love.graphics.newQuad(0,0,self.width,self.height,self.ImageWidth,self.ImageHeigth)
+				end
+			end
+		end
+	end
+end

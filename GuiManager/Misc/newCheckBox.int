@@ -1,0 +1,21 @@
+function gui:newCheckBox(x,y,sx,sy)
+	local check = self:newFrame(x or 0,y or 0,30,30,sx or 0,sy or 0)
+	check.isChecked = false
+	check.Visibility = 0
+	check.BorderSize = 0
+	local checkbox = check:newFrame(4,4,22,22)
+	checkbox.BorderSize = 4
+	checkbox:setRoundness(5,5,30)
+	local highlighter = checkbox:newFrame(4,4,14,14)
+	highlighter.BorderSize = 0
+	highlighter.Color = Color.gray50
+	highlighter:setRoundness(2,2,30)
+	highlighter.Visible = false
+	check:OnReleased(function(b,self)
+		self.isChecked = not highlighter.Visible
+		highlighter.Visible = not highlighter.Visible
+	end)
+	check.box = checkbox
+	check.highlighter = highlighter
+	return check
+end
