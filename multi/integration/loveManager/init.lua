@@ -49,11 +49,13 @@ local THREAD_ID = 1
 local OBJECT_ID = 0
 function THREAD:newFunction(func,holup)
 	return function(...)
-		local t = multi:newSystemThread("SystemThreadedFunction",func,...)
+		local t = multi:newSystemThread("SystemThreadedFunction"..math.random(0,999999999),func,...)
 		return thread:newFunction(function()
             return thread.hold(function()
                 if t.stab["returns"] then
-                    return unpack(t.stab.returns)
+                    local dat = t.stab.returns
+                    t.stab.returns = nil
+                    return unpack(dat)
                 end
 			end)
 		end,holup)()

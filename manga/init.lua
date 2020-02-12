@@ -23,9 +23,10 @@ function m.storeList(list)
         end
     end
     m.azlist = titles
+    return titles
 end
 -- returns manga
-m.getManga = function(title)
+m.getManga = THREAD:newFunction(function(title)
     local http = require("socket.http")
     local manga = http.request(title.Link)
     local tab = {}
@@ -45,7 +46,7 @@ m.getManga = function(title)
         end
     end
     return tab
-end
+end)
 local queue = multi:newSystemThreadedJobQueue(16)
 queue:doToAll(function()
     multi,thread = require("multi"):init()
@@ -70,20 +71,25 @@ m.getPages = function(manga,chapter)
     local http = require("socket.http")
     local tab = {}
     local cc = 0
+    local done = false
     local page = http.request(manga.Chapters[chapter].Link)
     tab.pages = {page:match([[id="imgholder.-src="([^"]*)]])}
     tab.nextChapter = "http://www.mangareader.net"..page:match([[Next Chapter:.-href="([^"]*)]])
+    local lastJob
     local conn = queue.OnJobCompleted(function(jid,link)
         table.insert(tab.pages,link)
         cc=cc+1
+        if jid==lastJob then
+            done = true
+        end
     end)
     local count = 0
     for link,page in page:gmatch([[<option value="([^"]*)">(%d*)</option>]]) do
-        queue:pushJob("getImage","http://www.mangareader.net"..link)
+        lastJob = queue:pushJob("getImage","http://www.mangareader.net"..link)
         count = count + 1
     end
     thread.hold(function()
-        return count==#tab.pages
+        return done
     end)
     return tab
 end
