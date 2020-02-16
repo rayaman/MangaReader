@@ -1,12 +1,15 @@
+print(love.filesystem.createDirectory("Cache"))
 local multi,thread = require("multi"):init()
-local GLOBAL,THREAD = require("multi.integration.loveManager"):init()
-local func = THREAD:newFunction(function(path)
-	require("love.image")
+GLOBAL,THREAD = require("multi.integration.loveManager"):init()
+local queue = multi:newSystemThreadedJobQueue(16)
+local LoadImage = queue:newFunction(function(path)
 	return love.image.newImageData(path)
 end)
-local load = THREAD:newFunction(function(path)
+local DownloadImage = queue:newFunction(function(url,hash)
+	print = THREAD:getConsole().print
 	require("love.image")
 	require("love.filesystem")
+	require("love.data")
 	local http = require("socket.http")
 	local request = require("luajit-request")
 	function download(path)
@@ -16,10 +19,20 @@ local load = THREAD:newFunction(function(path)
 			return http.request(path)
 		end
 	end
-	return love.image.newImageData(love.filesystem.newFileData((download(path)),"temp"..path:sub(-4,-1)))
+	local data = download(url)
+	function IsImage(str)
+		return str:find("\0")~=nil -- Image Data will contain nul character
+	end
+	love.filesystem.createDirectory("Cache")
+	if IsImage(data or "") then
+		love.filesystem.write("Cache/"..hash..".jpg", data)
+		return love.image.newImageData("Cache/"..hash..".jpg")
+	else
+		return "noimage"
+	end
 end)
 local cache = {}
-function gui:SetImage(i,inthread)
+function gui:SetImage(i,inthread,backup)
 	if not i then return end
 	if type(i) == "userdata" and i:type() == "Image" then
 		self.Image=i
@@ -31,7 +44,20 @@ function gui:SetImage(i,inthread)
 			self:SetImage(cache[i])
 		else
 			if i:match([[https?://]]) then
-				load(i).connect(function(img)
+				local hash = love.data.encode("string", "hex",love.data.hash("md5", i))
+				if love.filesystem.getInfo("Cache/"..hash..".jpg") then
+					self:SetImage("Cache/"..hash..".jpg")
+					return
+				end
+				DownloadImage(i,hash).connect(function(img)
+					if img == "noimage" then
+						print("Need backup")
+						if backup then
+							return self:SetImage(backup)
+						else
+							return nil
+						end
+					end
 					self.Image = love.graphics.newImage(img)
 					cache[i]=self.Image
 					self.ImageHeigth=self.Image:getHeight()

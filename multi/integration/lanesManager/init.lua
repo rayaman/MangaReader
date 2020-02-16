@@ -43,6 +43,13 @@ end
 -- Step 2 set up the Linda objects
 local __GlobalLinda = lanes.linda() -- handles global stuff
 local __SleepingLinda = lanes.linda() -- handles sleeping stuff
+local __ConsoleLinda = lanes.linda() -- handles console stuff
+multi:newLoop(function()
+	local _,data = __ConsoleLinda:receive(0, "Q")
+	if data then
+		print(unpack(data))
+	end
+end)
 local GLOBAL,THREAD = require("multi.integration.lanesManager.threads").init(__GlobalLinda,__SleepingLinda)
 local threads = {}
 local count = 1
@@ -77,7 +84,10 @@ function multi:newSystemThread(name, func, ...)
 	local args = {...}
 	c.thread = lanes.gen(table.concat(c.loadString,","),{globals={
 		THREAD_NAME=name,
-		THREAD_ID=count
+		THREAD_ID=count,
+		THREAD = THREAD,
+		GLOBAL = GLOBAL,
+		_Console = __ConsoleLinda
 	},priority=c.priority}, func)(unpack(args))
 	count = count + 1
 	function c:kill()

@@ -13,55 +13,40 @@ local headersize = 80
 local menusize = 350
 local spdt = .005
 local spd = 7
-local sliderActive = false
-local mm,bb
 -- keep at top
-local slider = thread:newFunction(function()
-    local menu,button = mm,bb
-    if sliderActive then return end
-    sliderActive = true
-    if not menu.Visible then
-        menu.Visible = true
-        for i=menusize/5,1,-1 do
-            menu:SetDualDim(-i*spd)
-            thread.sleep(spdt)
-        end
-        menu:SetDualDim(0)
-        button:SetImage("images/menuX.png")
-    else
-        for i=1,menusize/5 do
-            thread.sleep(spdt)
-            menu:SetDualDim(-i*spd)
-        end
-        menu.Visible = false
-        button:SetImage("images/menu.png")
-    end
-    sliderActive = false
-end)
+local head
 function app.createPage(name,path)
     local page = require("pages/"..path).init(app.workspace:newFullFrame(name),app.workspace)
     page.Color = theme.menu
     table.insert(app.pages,page)
     page.Visible = false
-    page:SetDualDim(nil,nil,nil,nil,.1,.1,.8,.8)
-    page:setRoundness(10,10,180)
     function page:Goto()
         for i,v in pairs(app.pages) do
             v.Visible = false
         end
         page.Visible = true
     end
-    local button = app.menu:newTextLabel(name,name,0,(#app.pages-1)*(headersize/2),0,headersize/2,0,0,1)
+    local button
+    if head == app.header then
+        button = head:newTextButton(name,name,5,0,100,60)
+    else
+        button = head:newTextButton(name,name,5,0,100,60,1)
+    end
+    button:centerY()
+    head = button
     button:fitFont()
     button.Color = theme.menuitem
     button:OnReleased(function()
+
         page:Goto()
-        slider()
     end)
+    print("done")
     return page
 end
 local function init(a)
+    love.filesystem.setIdentity("MangaPro")
     app.header = a:newFrame(0,0,0,headersize,0,0,1)
+    head = app.header
     app.header.Color = theme.header
     app.workspace = a:newFrame(0,headersize,0,-headersize,0,0,1,1)
     app.menu = a:newFrame(0,headersize,menusize,-headersize,0,0,0,1)
@@ -73,15 +58,9 @@ local function init(a)
     end)
     app.workspace.Color = Color.Black
     app.menu.Visible = false
-    local menubutton = app.header:newImageLabel("images/menu.png",0,0,headersize,headersize)
-    menubutton.BorderSize = 0
-    mm,bb = app.menu,menubutton
-    menubutton:OnReleased(function()
-        slider()
-    end)
     local search = app.createPage("Search","search")
     app.createPage("Favorites","favs")
-    search:Goto()
+    --search:Goto()
 end
 return {
     init = init

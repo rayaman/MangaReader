@@ -2,7 +2,12 @@ multi,thread = require("multi"):init()
 THREAD = multi.integration.THREAD
 local m = {}
 m.azlist = {}
-m.init = THREAD:newFunction(function()
+local queue = multi:newSystemThreadedJobQueue(16)
+queue:doToAll(function()
+    multi,thread = require("multi"):init()
+    http = require("socket.http") -- This is important
+end)
+m.init = queue:newFunction("init",function()
     local http = require("socket.http")
     local list = http.request("http://www.mangareader.net/alphabetical")
     return list
@@ -26,7 +31,7 @@ function m.storeList(list)
     return titles
 end
 -- returns manga
-m.getManga = THREAD:newFunction(function(title)
+m.getManga = queue:newFunction("queue",function(title)
     local http = require("socket.http")
     local manga = http.request(title.Link)
     local tab = {}
@@ -47,16 +52,11 @@ m.getManga = THREAD:newFunction(function(title)
     end
     return tab
 end)
-local queue = multi:newSystemThreadedJobQueue(16)
-queue:doToAll(function()
-    multi,thread = require("multi"):init()
-    http = require("socket.http") -- This is important
-end)
-queue:registerFunction("getImage",function(pageurl)
+m.getImage = queue:newFunction("getImage",function(pageurl)
     local page = http.request(pageurl)
     return page:match([[id="imgholder.-src="([^"]*)]])
 end)
-queue:registerFunction("getPages",function(manga,chapter)
+m._getPages = queue:newFunction("getPages",function(manga,chapter)
     local tab = {}
     local page = http.request(manga.Chapters[chapter].Link)
     tab.pages = {page:match([[id="imgholder.-src="([^"]*)]])}
@@ -70,23 +70,13 @@ end)
 m.getPages = function(manga,chapter)
     local http = require("socket.http")
     local tab = {}
-    local cc = 0
-    local done = false
     local page = http.request(manga.Chapters[chapter].Link)
     tab.pages = {page:match([[id="imgholder.-src="([^"]*)]])}
     tab.nextChapter = "http://www.mangareader.net"..page:match([[Next Chapter:.-href="([^"]*)]])
-    local lastJob
-    local conn = queue.OnJobCompleted(function(jid,link)
-        table.insert(tab.pages,link)
-        cc=cc+1
-        if jid==lastJob then
-            done = true
-        end
-    end)
-    local count = 0
     for link,page in page:gmatch([[<option value="([^"]*)">(%d*)</option>]]) do
-        lastJob = queue:pushJob("getImage","http://www.mangareader.net"..link)
-        count = count + 1
+        m._getPages("http://www.mangareader.net"..link).connect(function(link)
+            table.insert(tab.pages,link)
+        end)
     end
     thread.hold(function()
         return done
