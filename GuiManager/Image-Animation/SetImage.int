@@ -34,6 +34,11 @@ end)
 local cache = {}
 function gui:SetImage(i,inthread,backup)
 	if not i then return end
+	if self.scale.size.x~=0 or self.scale.size.y~=0 then
+		gui.OnScreenSizeChanged(function()
+			multi:newAlarm(.01):OnRing(function() self.Quad=love.graphics.newQuad(0,0,self.width,self.height,self.ImageWidth,self.ImageHeigth) end)
+		end)
+	end
 	if type(i) == "userdata" and i:type() == "Image" then
 		self.Image=i
 		self.ImageHeigth=self.Image:getHeight()
@@ -51,7 +56,6 @@ function gui:SetImage(i,inthread,backup)
 				end
 				DownloadImage(i,hash).connect(function(img)
 					if img == "noimage" then
-						print("Need backup")
 						if backup then
 							return self:SetImage(backup)
 						else

@@ -1,0 +1,11 @@
+function gui:isVisible()
+    if self.Visible == false then return false end
+    local parent = self.Parent
+    while parent~=_GuiPro do
+        if parent.Visible == false then
+            return false
+        end
+        parent = parent.Parent
+    end
+    return true
+end

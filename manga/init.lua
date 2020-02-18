@@ -35,6 +35,7 @@ m.getManga = queue:newFunction("queue",function(title)
     local http = require("socket.http")
     local manga = http.request(title.Link)
     local tab = {}
+    tab.Link = title.Link
     tab.Cover = manga:match([[<div id="mangaimg"><img src="(.-)"]])
     tab.Title = manga:match([[Name:.-"aname">%s*([^<]*)]])
     tab.AltTitle = manga:match([[Alternate Name:.-<td>([^<]*)]])

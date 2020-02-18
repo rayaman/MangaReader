@@ -67,10 +67,16 @@ gui.LoadAll("GuiManager/Drawing")
 -- End of Load
 gui:respectHierarchy()
 _GuiPro.width,_GuiPro.height=love.graphics.getDimensions()
+gui.OnScreenSizeChanged = multi:newConnection()
 multi:newThread("GuiManager",function()
+	local x,y
 	while true do
+		x,y = love.graphics.getDimensions()
 		thread.sleep(.01)
 		_GuiPro.width,_GuiPro.height=love.graphics.getDimensions()
+		if x~=_GuiPro.width or y~=_GuiPro.height then
+			gui.OnScreenSizeChanged:Fire(x,y,_GuiPro.width,_GuiPro.height)
+		end
 	end
 end)
 multi:onDraw(function()

@@ -60,6 +60,13 @@ function gui:newScrollMenu(name)
 		self.ref = ref
 	end
 	temp.max = 40
+	function temp:reset()
+		temp.max = 40
+		for i,v in pairs(temp.list) do
+			v:Destroy()
+		end
+		temp.list = {}
+	end
 	function temp:addItem(text, height, padding, obj)
 		local padding = padding or 10
 		local height = height or 30
