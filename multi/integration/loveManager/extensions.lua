@@ -179,7 +179,7 @@ function multi:newSystemThreadedJobQueue(n)
 						queueReturn:push(tab)
 					end
 				end
-			end).OnError(function(...)
+			end):OnError(function(...)
 				error(...)
 			end)
 			multi:newThread("Idler",function()

@@ -54,34 +54,31 @@ m.getManga = queue:newFunction("queue",function(title)
     return tab
 end)
 m.getImage = queue:newFunction("getImage",function(pageurl)
+    local http = require("socket.http")
     local page = http.request(pageurl)
     return page:match([[id="imgholder.-src="([^"]*)]])
 end)
-m._getPages = queue:newFunction("getPages",function(manga,chapter)
+m._getPages = queue:newFunction("getPages",function(Link)
+    local http = require("socket.http")
     local tab = {}
-    local page = http.request(manga.Chapters[chapter].Link)
-    tab.pages = {page:match([[id="imgholder.-src="([^"]*)]])}
+    local page = http.request(Link)
+    tab.pages = {}
     tab.nextChapter = "http://www.mangareader.net"..page:match([[Next Chapter:.-href="([^"]*)]])
     for link,page in page:gmatch([[<option value="([^"]*)">(%d*)</option>]]) do
-        table.insert(tab.pages,getImage("http://www.mangareader.net"..link))
+        table.insert(tab.pages,"http://www.mangareader.net"..link)
     end
     return tab
 end)
 -- returns pages
-m.getPages = function(manga,chapter)
+m.getPages = function(chapter)
     local http = require("socket.http")
     local tab = {}
-    local page = http.request(manga.Chapters[chapter].Link)
-    tab.pages = {page:match([[id="imgholder.-src="([^"]*)]])}
+    local page = http.request(chapter.Link)
+    tab.pages = {chapter.Link}
     tab.nextChapter = "http://www.mangareader.net"..page:match([[Next Chapter:.-href="([^"]*)]])
     for link,page in page:gmatch([[<option value="([^"]*)">(%d*)</option>]]) do
-        m._getPages("http://www.mangareader.net"..link).connect(function(link)
-            table.insert(tab.pages,link)
-        end)
+        table.insert(tab.pages,"http://www.mangareader.net"..link)
     end
-    thread.hold(function()
-        return done
-    end)
-    return tab
+    return tab.pages
 end
 return m

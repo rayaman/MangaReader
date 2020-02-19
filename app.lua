@@ -64,10 +64,10 @@ local function init(a)
     end)
     app.workspace.Color = Color.Black
     app.menu.Visible = false
-    local search = app.createPage("Search","search")
-    local favs = app.createPage("Favorites","favs")
-    search:Goto()
-    --app.createPage("Favorites","favs")
+    app.workspace.search = app.createPage("Search","search")
+    app.workspace.view, app.workspace.button = app.createPage("Viewer","view")
+    --app.workspace.button.Visible = false
+    app.workspace.search:Goto()
 end
 return {
     init = init

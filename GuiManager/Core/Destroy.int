@@ -1,0 +1,32 @@
+-- More work needs to be done tbh
+function gui:_Destroy()
+	for i,v in pairs(self) do
+		self.Children={}
+	end
+	for i,v in pairs(self.threads) do
+		v:Kill()
+	end
+	for i,v in pairs(self.conns) do
+		v:Destroy()
+	end
+	self.Visible = false
+	self.Active = false
+end
+function gui:Destroy()
+	check=self.Parent:getChildren()
+	local objs = GetAllChildren(self)
+	local cc=0
+	for cc=1,#check do
+		if check[cc]==self then
+			table.remove(self.Parent.Children,cc)
+		end
+	end
+	self.Destroyed = true
+	if #self.Parent.Children==0 then
+		self.Parent.isLeaf = true
+	end
+	for i,v in pairs(objs) do
+		v:_Destroy()
+	end
+	self:_Destroy()
+end

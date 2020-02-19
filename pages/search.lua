@@ -63,6 +63,7 @@ function getFavs()
         return {}
     end
 end
+
 local function init(page,workspace)
     local favs = getFavs()
     local holder = page:newFrame("",15,80,-30,-95,0,0,1,1)
@@ -86,6 +87,14 @@ local function init(page,workspace)
             mangaViewer.Visible = false
         end)
     end)
+    function MenuItem(b,self)
+        multi:newThread(function()
+            thread.sleep(.1)
+            mangaViewer.Visible = false
+        end)
+        workspace.view:Goto()
+        workspace.view.doChapter(self.chapter)
+    end
     goback.Color = theme.button
     function setViewer(manga)
         menu:reset()
@@ -124,10 +133,11 @@ local function init(page,workspace)
         menu.header.Color = theme.header
         menu.ref = {
             [[setRoundness(5,5,30)]],
+            [[OnReleased(MenuItem)]],
             Color = theme.menuitem
         }
         for i,v in ipairs(manga.Chapters) do
-            menu:addItem(v.Lead, 20, 3)
+            menu:addItem(v.Lead, 20, 3).chapter = v
         end
     end
     function addManga(manga,v)
@@ -212,9 +222,7 @@ local function init(page,workspace)
         end
         for i,v in pairs(favs) do
             thread.yield()
-            print(v.Title,v.Link)
             mangaReader.getManga(v).connect(function(manga)
-                print(manga.Title)
                 addManga(manga,{Title=manga.Title,Link=manga.Link})
             end)
         end
@@ -236,7 +244,6 @@ local function init(page,workspace)
             end
             for i,v in pairs(list) do
                 thread.yield()
-                print(v)
                 mangaReader.getManga(v).connect(function(manga)
                     addManga(manga,{Title=manga.Title,Link=manga.Link})
                 end)

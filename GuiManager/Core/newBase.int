@@ -48,6 +48,8 @@ function gui:newBase(tp,name, x, y, w, h, sx ,sy ,sw ,sh)
 		c.DPI=love.window.getPixelScale()
 		x, y, w, h=c.DPI*x,c.DPI*y,c.DPI*w,c.DPI*h
 	end
+	c.threads = {}
+	c.conns = {}
 	c.centerFontY=true
 	c.FormFactor="rectangle"
 	c.Type=tp
