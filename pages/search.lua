@@ -93,7 +93,7 @@ local function init(page,workspace)
             mangaViewer.Visible = false
         end)
         workspace.view:Goto()
-        workspace.view.doChapter(self.chapter)
+        workspace.view.doChapter(self)
     end
     goback.Color = theme.button
     function setViewer(manga)
@@ -137,7 +137,9 @@ local function init(page,workspace)
             Color = theme.menuitem
         }
         for i,v in ipairs(manga.Chapters) do
-            menu:addItem(v.Lead, 20, 3).chapter = v
+            local item = menu:addItem(v.Lead, 20, 3)
+            item.chapter = v
+            item.manga = manga
         end
     end
     function addManga(manga,v)
